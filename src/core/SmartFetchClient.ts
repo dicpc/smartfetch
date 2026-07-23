@@ -186,7 +186,8 @@ export class SmartFetchClient {
         }
 
         if (!response.ok) {
-          throw new Error(`HTTP error ${response.status}: ${response.statusText}`)
+          lastError = new Error(`HTTP error ${response.status}: ${response.statusText}`)
+          break
         }
 
         const data = (await response.json()) as T
