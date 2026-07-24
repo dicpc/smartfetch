@@ -205,7 +205,9 @@ export class SmartFetchClient {
       } catch (error) {
         clearTimeout(timer)
 
-        if (error instanceof Error && error.name === 'AbortError') {
+        if ((error instanceof Error || error instanceof DOMException) &&
+          (error as { name: string }).name === 'AbortError'
+        ) {
           const timeoutMs = merged.timeout!
           this.eventBus.emit('timeout', { url: fullUrl, timeoutMs })
           throw new Error(`Request to "${fullUrl}" timed out after ${timeoutMs}ms`)
