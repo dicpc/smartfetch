@@ -8,8 +8,20 @@ describe('withTimeout Middleware', () => {
         const timeoutMs = 100;
         const middleware = withTimeout(timeoutMs);
         
-        // Simulamos un next() que tarda más que el timeout
-        const slowNext = jest.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 200)));
+        // Simulamos un fetch que respeta la señal de aborto (como el fetch real)
+        const slowNext = jest.fn().mockImplementation((req: Request) => {
+            return new Promise((resolve, reject) => {
+                const timer = setTimeout(() => resolve(new Response('OK')), 200);
+                
+                // Escuchamos si el middleware decide abortar la petición
+                req.signal.addEventListener('abort', () => {
+                    clearTimeout(timer);
+                    const abortError = new Error('AbortError');
+                    abortError.name = 'AbortError'; // Es vital que se llame así
+                    reject(abortError);
+                });
+            });
+        });
 
         await expect(middleware(mockRequest, slowNext)).rejects.toThrow(SmartFetchTimeoutError);
     });
